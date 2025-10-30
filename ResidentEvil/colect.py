@@ -1,6 +1,8 @@
 #%%
 import requests
 from bs4 import BeautifulSoup
+from tqdm import tqdm
+import pandas as pd
 
 headers = {
     'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:143.0) Gecko/20100101 Firefox/143.0',
@@ -25,12 +27,12 @@ def get_content(url):
     return resp
 
 def get_basic_infos(soup):
-    div_page = soup.find("div", class_ = "td-page-content")
+    div_page = soup.find("div", class_ ="td-page-content")
     paragrafo = div_page.find_all("p")[1]
     ems = paragrafo.find_all("em")
     data = {}
     for i in ems:
-        chave, valor = i.text.split(":")
+        chave, valor, *_ = i.text.split(":")
         chave = chave.strip(" ")
         data[chave] = valor.strip(" ")
 
@@ -59,24 +61,36 @@ def get_personagens_info(url):
         data = get_basic_infos(soup)
         data["Aparições"] = get_aparicoes(soup)
         return data
+    
+def get_links():
+    url = "https://www.residentevildatabase.com/personagens/"
+    resp = requests.get(url, headers=headers)
+    soup_personagens = BeautifulSoup(resp.text)
+    ancoras = (soup_personagens.find("div", class_="td-page-content")
+                               .find_all("a"))
+
+    links = [i["href"] for i in ancoras]
+    return links
 
 
 #%%
 
 url = "https://www.residentevildatabase.com/personagens/alex-wesker/"
 
-get_personagens_info(url)
+links = get_links()
+data = []
+for i in tqdm(links):
+    d = get_personagens_info(i)
+    d["Link"] = i
+    nome = i.strip("/").split("/")[-1].replace("-", " ").title()
+    d["Nome"] = nome
+    data.append(d)
 
 #%%
 
-url = "https://www.residentevildatabase.com/personagens/"
+df = pd.DataFrame(data)
 
-resp = requests.get(url, headers=headers)
+#%%
 
-soup_personagens = BeautifulSoup(resp.text)
 
-ancoras = soup_personagens.find("div", class_="td-page-content").find_all("a")
-
-links_personagens = [i["href"] for i in ancoras]
-
-links_personagens
+df.to_parquet("dados_re.parquet", index=False)
