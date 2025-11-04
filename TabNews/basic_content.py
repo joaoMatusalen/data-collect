@@ -12,10 +12,9 @@ def get_response(**kwargs):
     resp = requests.get(url, params=kwargs)
     return resp
 
-
 def save_data(data, option='json'):
     now = datetime.datetime.now().strftime("%Y%m%d_%H%M%S.%f")
-    
+
     if option == 'json':
         with open(f"data/contents/json/{now}.json", 'w') as open_file:
             json.dump(data, open_file, indent=4)
@@ -26,13 +25,27 @@ def save_data(data, option='json'):
 
 #%%
 
-resp = get_response(page=1, per_page=100, strategy="new")
+page = 1
+date_stop = pd.to_datetime('2025-10-31').date()
 
-if resp.status_code == 200:
-    print("Sucesso!")
+while True:
+    resp = get_response(page=page, per_page=100, strategy="new")
+    if resp.status_code == 200:
 
-data = resp.json()
+        data = resp.json()
+        save_data(data)
+
+        date = pd.to_datetime(data[-1]["updated_at"]).date()
+
+        if len(data) < 100 or date < date_stop:
+            break
+
+        print(page)
+        page += 1
+    else:
+        print("Aguarde 10 segundos!")
+        print(resp.status_code)
+        time.sleep(10)
 
 #%%
 
-save_data(data)
