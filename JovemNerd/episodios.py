@@ -1,9 +1,10 @@
 # %%
-import requests
 import datetime
 import json
-import pandas as pd
 import time
+
+import pandas as pd
+import requests
 
 # %%
 class Collector:
@@ -30,7 +31,7 @@ class Collector:
             json.dump(data, open_file)
 
 
-    def save_data(self, data, format='json'):
+    def save_data(self, data, fdataormat='json'):
         if format == 'json':
             self.save_json(data)
 
@@ -49,7 +50,7 @@ class Collector:
         return data
 
 
-    def auto_exec(self,save_format='json', date_stop='2000-01-01'):
+    def auto_exec(self, save_format='json', date_stop='2000-01-01'):
         page = 1
         while True:
             print(page)
@@ -57,7 +58,7 @@ class Collector:
                                      page=page,
                                      per_page=1000)
             if data == None:
-                print("Erro ao coletar dados... aguardando.")
+                print("Erro ao coletar dados... Aguardando.")
                 time.sleep(60*5)
             
             else:
